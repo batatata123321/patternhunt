@@ -3,7 +3,6 @@
 [![Crates.io](https://img.shields.io/crates/v/patternhunt.svg)](https://crates.io/crates/patternhunt)
 [![Documentation](https://docs.rs/patternhunt/badge.svg)](https://docs.rs/patternhunt)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/yourusername/patternhunt/actions/workflows/rust.yml/badge.svg)](https://github.com/yourusername/patternhunt/actions)
 
 A high-performance, feature-rich glob pattern matching library for Rust, designed for efficient and flexible file path matching with both synchronous and asynchronous APIs.
 
