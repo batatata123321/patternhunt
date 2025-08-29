@@ -7,10 +7,9 @@ readme = "README.md"
 keywords = ["glob", "pattern", "matching", "filesystem", "search", "async"]
 categories = ["filesystem", "pattern-matching", "asynchronous"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/your-username/patternhunt"
+repository = "https://github.com/xvi-xv-xii-ix-xxii-ix-xiv/patternhunt"
 documentation = "https://docs.rs/patternhunt"
-homepage = "https://github.com/your-username/patternhunt"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["<xvi-xv-xii-ix-xxii-ix-xiv <xvi.xv.xii.ix.xxii.ix.xiv@gmail.com>"]
 
 [dependencies]
 camino = "1.1.12"
