@@ -35,7 +35,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-glob-lib = { git = "https://github.com/username/glob-lib.git" }
+patternhunt = "0.1"
 ```
 
 Ensure you have the required dependencies installed, including `globset`, `regex`, `lru`, `once_cell`, `camino`, `walkdir`, and `tokio` (for async features).
@@ -45,16 +45,20 @@ Ensure you have the required dependencies installed, including `globset`, `regex
 ### Basic Example (Synchronous)
 
 ```rust
-use glob_lib::{GlobOptions, sync::glob_sync, Patterns};
-use camino::Utf8PathBuf;
+use patternhunt::{PatternHunt, GlobOptions};
 
-fn main() -> Result<(), glob_lib::GlobError> {
-    let patterns = Patterns::compile_many(&["*.txt", "src/*.rs"], &GlobOptions::default())?;
-    let results = glob_sync(patterns, GlobOptions::default(), None)?;
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Search for Rust and Markdown files
+    let results = PatternHunt::sync(
+        &["*.rs", "*.md", "Cargo.toml"],
+        &["."],
+        GlobOptions::default()
+    )?;
 
     for path in results {
         println!("Found: {}", path.display());
     }
+
     Ok(())
 }
 ```
@@ -62,57 +66,182 @@ fn main() -> Result<(), glob_lib::GlobError> {
 ### Asynchronous Example
 
 ```rust
-use glob_lib::{GlobOptions, async_glob::glob_stream, Patterns};
+use patternhunt::{PatternHunt, GlobOptions};
 use futures::StreamExt;
 
 #[tokio::main]
-async fn main() -> Result<(), glob_lib::GlobError> {
-    let patterns = Patterns::compile_many(&["*.txt", "src/*.rs"], &GlobOptions::default())?;
-    let mut stream = glob_stream(patterns, GlobOptions::default(), None);
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Create a stream of results
+    let mut stream = PatternHunt::stream(
+        &["*.rs", "*.md"],
+        &["."],
+        GlobOptions::default()
+    )?;
 
+    // Process results as they're found
     while let Some(result) = stream.next().await {
         match result {
             Ok(path) => println!("Found: {}", path.display()),
             Err(e) => eprintln!("Error: {}", e),
         }
     }
+
     Ok(())
 }
 ```
 
-### Advanced Example with Predicates
+### Using Brace Expansion
 
 ```rust
-use glob_lib::{GlobOptions, GlobOptionsBuilder, Predicates, FileType, sync::glob_sync, Patterns};
-use std::time::{Duration, SystemTime};
+use patternhunt::{PatternHunt, GlobOptions};
 
-fn main() -> Result<(), glob_lib::GlobError> {
-    // Configure predicates to filter files
+fn brace_expansion() -> Result<(), Box<dyn std::error::Error>> {
+    // Brace expansion with multiple extensions
+    let results = PatternHunt::sync(
+        &["src/**/*.{rs,toml,json}", "data/{2020..2023}-*.csv"],
+        &["."],
+        GlobOptions::default()
+    )?;
+
+    println!("Found {} files with brace expansion", results.len());
+    Ok(())
+}
+```
+
+### Regex Pattern Matchin
+
+```rust
+use patternhunt::{PatternHunt, GlobOptions};
+
+fn regex_patterns() -> Result<(), Box<dyn std::error::Error>> {
+    // Use regex patterns (prefixed with re:)
+    let results = PatternHunt::sync(
+        &["re:.*\\d{4}-\\d{2}-\\d{2}\\.log$", "re:^config\\.(yml|yaml|json)$"],
+        &["."],
+        GlobOptions::default()
+    )?;
+
+    println!("Found {} files with regex patterns", results.len());
+    Ok(())
+}
+```
+
+### Filtering with Predicates
+
+```rust
+use patternhunt::{PatternHunt, GlobOptions, GlobOptionsBuilder, Predicates, FileType};
+use std::time::{SystemTime, Duration};
+
+fn filtered_search() -> Result<(), Box<dyn std::error::Error>> {
+    // Create predicates for filtering
     let predicates = Predicates {
-        min_size: Some(1024), // Minimum 1KB
-        max_size: Some(1024 * 1024), // Maximum 1MB
+        min_size: Some(1024),        // At least 1KB
+        max_size: Some(1024 * 1024), // At most 1MB
         file_type: Some(FileType::File),
-        mtime_after: Some(SystemTime::now() - Duration::from_secs(24 * 60 * 60)),
-        ..Default::default()
+        mtime_after: Some(SystemTime::now() - Duration::from_secs(3600 * 24 * 7)), // Modified in last week
+        mtime_before: None,
+        ctime_after: None,
+        ctime_before: None,
+        follow_symlinks: false,
     };
 
-    // Configure glob options
-    let opts = GlobOptionsBuilder::new()
-        .follow_symlinks(true)
-        .max_depth(3)
-        .case_sensitive(true)
+    // Configure options with predicates
+    let options = GlobOptionsBuilder::new()
         .predicates(predicates)
         .build();
 
-    // Compile patterns
-    let patterns = Patterns::compile_many(&["src/**/*.{rs,toml}"], &opts)?;
+    // Perform search with filtering
+    let results = PatternHunt::sync(
+        &["**/*"],
+        &["."],
+        options
+    )?;
 
-    // Perform synchronous globbing
-    let results = glob_sync(patterns, opts, None)?;
+    println!("Found {} matching files", results.len());
+    Ok(())
+}
+```
 
-    for path in results {
-        println!("Found: {}", path.display());
-    }
+### Complex Pattern Matching
+
+```rust
+use patternhunt::{PatternHunt, GlobOptions};
+
+fn complex_patterns() -> Result<(), Box<dyn std::error::Error>> {
+    let options = GlobOptions::default();
+
+    // Extended glob patterns
+    let results = PatternHunt::sync(
+        &["**/*.@(jpg|png|gif)", "**/!(temp)*.txt", "**/+([0-9]).log"],
+        &["."],
+        options
+    )?;
+
+    println!("Found {} files with complex patterns", results.len());
+    Ok(())
+}
+```
+
+### Multiple Root Directories
+
+```rust
+use patternhunt::{PatternHunt, GlobOptions};
+
+fn multiple_roots() -> Result<(), Box<dyn std::error::Error>> {
+    let options = GlobOptions::default();
+
+    // Search in multiple directories
+    let results = PatternHunt::sync(
+        &["**/*.rs", "**/*.md"],
+        &["src", "tests", "examples", "docs"],
+        options
+    )?;
+
+    println!("Found {} files in multiple directories", results.len());
+    Ok(())
+}
+```
+
+### Depth-Limited Search
+
+```rust
+use patternhunt::{PatternHunt, GlobOptions, GlobOptionsBuilder};
+
+fn depth_limited() -> Result<(), Box<dyn std::error::Error>> {
+    // Limit search depth
+    let options = GlobOptionsBuilder::new()
+        .max_depth(3) // Only search up to 3 levels deep
+        .build();
+
+    let results = PatternHunt::sync(
+        &["**/*.rs"],
+        &["."],
+        options
+    )?;
+
+    println!("Found {} files with depth limit", results.len());
+    Ok(())
+}
+```
+
+### Case-Insensitive Search
+
+```rust
+use patternhunt::{PatternHunt, GlobOptions, GlobOptionsBuilder};
+
+fn case_insensitive() -> Result<(), Box<dyn std::error::Error>> {
+    // Case-insensitive search (useful on case-sensitive filesystems)
+    let options = GlobOptionsBuilder::new()
+        .case_sensitive(false)
+        .build();
+
+    let results = PatternHunt::sync(
+        &["**/*.RS", "**/*.MD"], // Upper-case patterns
+        &["."],
+        options
+    )?;
+
+    println!("Found {} files with case-insensitive search", results.len());
     Ok(())
 }
 ```
