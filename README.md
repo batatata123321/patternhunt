@@ -1,4 +1,9 @@
-# Rust Glob Library
+# PatternHunt - Advanced File Globbing Library for Rust
+
+[![Crates.io](https://img.shields.io/crates/v/patternhunt.svg)](https://crates.io/crates/patternhunt)
+[![Documentation](https://docs.rs/patternhunt/badge.svg)](https://docs.rs/patternhunt)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://github.com/yourusername/patternhunt/actions/workflows/rust.yml/badge.svg)](https://github.com/yourusername/patternhunt/actions)
 
 A high-performance, feature-rich glob pattern matching library for Rust, designed for efficient and flexible file path matching with both synchronous and asynchronous APIs.
 
@@ -47,7 +52,7 @@ use camino::Utf8PathBuf;
 fn main() -> Result<(), glob_lib::GlobError> {
     let patterns = Patterns::compile_many(&["*.txt", "src/*.rs"], &GlobOptions::default())?;
     let results = glob_sync(patterns, GlobOptions::default(), None)?;
-    
+
     for path in results {
         println!("Found: {}", path.display());
     }
@@ -65,7 +70,7 @@ use futures::StreamExt;
 async fn main() -> Result<(), glob_lib::GlobError> {
     let patterns = Patterns::compile_many(&["*.txt", "src/*.rs"], &GlobOptions::default())?;
     let mut stream = glob_stream(patterns, GlobOptions::default(), None);
-    
+
     while let Some(result) = stream.next().await {
         match result {
             Ok(path) => println!("Found: {}", path.display()),
@@ -175,3 +180,4 @@ Contributions are welcome! Please submit issues or pull requests to the GitHub r
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
+
