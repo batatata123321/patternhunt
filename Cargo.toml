@@ -1,0 +1,41 @@
+[package]
+name = "patternhunt"
+version = "0.3.0"
+edition = "2021"
+description = "A high-performance, cross-platform glob/pattern matching library for filesystem search with advanced pattern support and metadata filtering"
+readme = "README.md"
+keywords = ["glob", "pattern", "matching", "filesystem", "search", "async"]
+categories = ["filesystem", "pattern-matching", "asynchronous"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/your-username/patternhunt"
+documentation = "https://docs.rs/patternhunt"
+homepage = "https://github.com/your-username/patternhunt"
+authors = ["Your Name <your.email@example.com>"]
+
+[dependencies]
+camino = "1.1.12"
+globset = "0.4"
+walkdir = "2"
+thiserror = "1"
+rayon = "1.7"
+dashmap = "5"
+once_cell = "1.18"
+
+tokio = { version = "1", features = ["fs", "rt-multi-thread", "macros", "sync", "time"], optional = true }
+async-stream = { version = "0.3", optional = true }
+futures = { version = "0.3", optional = true }
+lru = "0.16.0"
+regex = "1.11.2"
+
+[dev-dependencies]
+criterion = "0.4"
+tempfile = "3"
+
+[[bench]]
+name = "pattern_bench"
+harness = false
+
+[features]
+default = ["async"]
+
+async = ["tokio", "async-stream", "futures"]
