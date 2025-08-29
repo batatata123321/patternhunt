@@ -180,4 +180,3 @@ Contributions are welcome! Please submit issues or pull requests to the GitHub r
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
-
